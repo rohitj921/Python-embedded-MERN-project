@@ -2,7 +2,7 @@
 //imported packages and env variables
 const express = require('express');
 const dotenv = require('dotenv');
-const { spawn } = require('child_process');
+const { spawn, exec } = require('child_process');
 const cors = require('cors');
 dotenv.config();
 const app = express();
@@ -25,13 +25,15 @@ app.use(express.json())
 const executePythonScript = async (script, args) => {
     const arguments = args.map(arg => arg.toString());
 
-    const pythonChildProcess = spawn("python", [script, ...arguments]);
+    
+
+    const pythonChildProcess = spawn("./python_scripts/venv/Scripts/python", [script, ...arguments]);
 
     const result = await new Promise((resolve, reject) => {
         let output;
 
         pythonChildProcess.stdout.on('data', (data) => {
-            output = JSON.parse(data);
+            output = data.toString();
         })
 
         pythonChildProcess.stderr.on('data', (err) => {
@@ -41,6 +43,7 @@ const executePythonScript = async (script, args) => {
 
         pythonChildProcess.on('exit', (code) => {
             console.log(`Process  exited with code ${code}`);
+            console.log(output);
             resolve(output);
         })
     });
@@ -57,12 +60,12 @@ app.get('/', (req, res) => {
 app.post('/factorial', async (req, res, next) => {
     try {
         const { value } = req.body;
-        console.log(value);
+        console.log(value,);
         if (!value) {
             res.locals.errorCode = 400;
             throw new Error("Value not defined!");
         }
-        const result = await executePythonScript("./python_scripts/prog.py", [value])
+        const result = await executePythonScript("./python_scripts/analyzer.py", [value])
 
         if(!result){
             res.locals.errorCode = 500;
